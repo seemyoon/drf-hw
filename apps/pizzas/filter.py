@@ -2,21 +2,24 @@ from django.http import QueryDict
 from rest_framework.exceptions import ValidationError
 
 from apps.pizzas.models import PizzaModel
+from apps.pizzas.serializers import PizzaSerializer
 
 
 def filter_pizzas(query: QueryDict) -> QueryDict:
     qs = PizzaModel.objects.all()
 
+    # 2 way
     # sort
-    sort_param = query.get('sort')
-    print(sort_param)
-    if sort_param:
-        sort_fields = sort_param.split(',')
-        qs = qs.order_by(*sort_fields)
+    # sort_param = query.get('sort')
+    # print(sort_param)
+    # if sort_param:
+    #     sort_fields = sort_param.split(',')
+    #     qs = qs.order_by(*sort_fields)
 
     for k, v in query.items():
-        if k == 'sort':
-            continue # Skip the 'sort' parameter since we've already processed it
+        # 1 way
+        # if k == 'sort':
+        #     continue # Skip the 'sort' parameter since we've already processed it
         match k:
             # price
             case 'price__gt':
@@ -50,7 +53,15 @@ def filter_pizzas(query: QueryDict) -> QueryDict:
                 qs = qs.filter(name__istartswith=v)
             case 'name__icontains':
                 qs = qs.filter(name__icontains=v)
+            case 'order':
+                fields = PizzaSerializer.Meta.fields
+                allowed_fields = (*fields, *[f'-{field}' for field in fields])
+
+                if v not in allowed_fields:
+                    raise ValidationError({'detail': f'only allowed fields: {allowed_fields}'})
+
+                qs = qs.order_by(v)
             case _:
-                raise ValidationError(f'{k} not allowed')
+                raise ValidationError({'detail': f'"{k} not allowed"'})
 
     return qs
