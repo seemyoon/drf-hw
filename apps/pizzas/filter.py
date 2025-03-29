@@ -8,7 +8,7 @@ from apps.pizzas.serializers import PizzaSerializer
 def filter_pizzas(query: QueryDict) -> QueryDict:
     qs = PizzaModel.objects.all()
 
-    # 2 way
+    # 1 way
     # sort
     # sort_param = query.get('sort')
     # print(sort_param)
